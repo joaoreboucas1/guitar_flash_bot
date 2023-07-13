@@ -94,9 +94,9 @@ def start_game(song):
     print(f"{datetime.now()}: Scroll twice down")
     pg.press('a') # Presses any button to start the song
     print(f"{datetime.now()}: Press a")
-    screen_grab()
 
 def play_song():
+    print(f"{datetime.now()}: Starting song...")
     previous_pressed = []
     action_queue = []
     frame = 0
@@ -185,7 +185,7 @@ def play_song():
 
 def main():
     print(f"{datetime.now()}: Starting bot!")
-    # song = 'Technical Difficulties'jljljksj
+    # song = 'Technical Difficulties'
     song = "Monsoon"
     # song = "My Will Be Done"
     start_game(song)
@@ -195,7 +195,7 @@ def main():
         play_song()
         print(f"{datetime.now()}: Song finished! Starting next...")
         pg.click(next_button)
-        sleep(10)
+        sleep(20)
         pg.scroll(-2*MOUSE_SCROLL) # Adjusts the screen to fit play area
         pg.press('a')
         

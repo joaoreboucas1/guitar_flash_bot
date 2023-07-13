@@ -92,13 +92,14 @@ def start_game(song):
     sleep(10) # Takes a while for the song to load
     pg.scroll(-2*MOUSE_SCROLL) # Adjusts the screen to fit play area
     print(f"{datetime.now()}: Scroll twice down")
+    sleep(1)
     pg.press('a') # Presses any button to start the song
     print(f"{datetime.now()}: Press a")
 
 def play_song():
     print(f"{datetime.now()}: Starting song...")
     previous_pressed = []
-    action_queue = []
+    action_queue = [{'action': None, 'frame': -1}]
     frame = 0
     idle_frames = 0
     im = screen_grab()
@@ -112,26 +113,25 @@ def play_song():
     interval = 3
     while idle_frames < 3600:
         frame += 1
-        if len(action_queue) > 0:
-            last_action = action_queue[-1]
-            if last_action['frame'] == frame:
-                if last_action['action'] == 'press':
-                    print(f"{datetime.now()}: Pressing", last_action['buttons'])
-                    pg.press(last_action['buttons']) 
-                elif last_action['action'] == 'hold' and not holding:
-                    holding = True
-                    held_buttons = last_action['buttons']
-                    print(f"{datetime.now()}: Holding", held_buttons)
-                    for button in held_buttons:
-                        pg.keyDown(button)                    
-                elif last_action['action'] == 'release':
-                    holding = False
-                    print(f"{datetime.now()}: Releasing", held_buttons)
-                    for button in held_buttons:
-                        pg.keyUp(button)
-                    held_buttons = []
-                else:
-                    assert False, f"Unknown action {last_action['action']}"
+        last_action = action_queue[-1]
+        if last_action['frame'] == frame:
+            if last_action['action'] == 'press':
+                print(f"{datetime.now()}: Pressing", last_action['buttons'])
+                pg.press(last_action['buttons']) 
+            elif last_action['action'] == 'hold' and not holding:
+                holding = True
+                held_buttons = last_action['buttons']
+                print(f"{datetime.now()}: Holding", held_buttons)
+                for button in held_buttons:
+                    pg.keyDown(button)                    
+            elif last_action['action'] == 'release':
+                holding = False
+                print(f"{datetime.now()}: Releasing", held_buttons)
+                for button in held_buttons:
+                    pg.keyUp(button)
+                held_buttons = []
+            else:
+                assert False, f"Unknown action {last_action['action']}"
         
         im = screen_grab()
         color_green = im.getpixel(chord_green)
@@ -170,11 +170,10 @@ def play_song():
             idle_frames += 1
         else:
             if should_hold and not holding:
-                # print(f"Must hold {pressed_buttons} in 3 frames")
                 if action_queue[-1]['action'] == 'hold':
                     pass
-                else:
-                    action_queue.append({'action': 'hold', 'buttons': pressed_buttons, 'frame': frame + interval})
+                # print(f"Must hold {pressed_buttons} in 3 frames")
+                action_queue.append({'action': 'hold', 'buttons': pressed_buttons, 'frame': frame + interval})
             else: 
                 # print(f"Must press {pressed_buttons} in 3 frames")
                 if not holding:
@@ -197,6 +196,7 @@ def main():
         pg.click(next_button)
         sleep(20)
         pg.scroll(-2*MOUSE_SCROLL) # Adjusts the screen to fit play area
+        sleep(1)
         pg.press('a')
         
         

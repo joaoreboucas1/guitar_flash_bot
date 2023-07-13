@@ -21,7 +21,7 @@ chord_blue = (1040, 836)
 chord_orange = (1134, 836)
 
 # Chord check coordinates:
-chord_green = (787, 790)
+chord_green = (782, 790)
 chord_red = (864, 790)
 chord_yellow = (947, 790)
 chord_blue = (1027, 790)
@@ -165,7 +165,7 @@ def play_song():
                     pass
                 action_queue.append({'action': 'release', 'buttons': None, 'frame': frame + interval})
 
-        if pressed_buttons == previous_pressed or pressed_buttons == []:
+        if pressed_buttons == previous_pressed or pressed_buttons == [] or len(pressed_buttons) == 5:
             pressed_buttons = []
             idle_frames += 1
         else:

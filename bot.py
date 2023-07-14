@@ -80,6 +80,14 @@ def choose_song(song):
         y_song = 684
     elif song == 'My Will Be Done':
         y_song = 742
+    elif song == 'Breakthrough':
+        y_song = 880
+        scroll_down(600)
+        sleep(1)
+        scroll_down(50)
+        sleep(1)
+        scroll_down(-8)
+        sleep(1)
     else:
         assert False, "Other songs not implemented"
     pg.click(x_song, y_song)
@@ -172,8 +180,9 @@ def play_song():
             if should_hold and not holding:
                 if action_queue[-1]['action'] == 'hold':
                     pass
-                # print(f"Must hold {pressed_buttons} in 3 frames")
-                action_queue.append({'action': 'hold', 'buttons': pressed_buttons, 'frame': frame + interval})
+                else:
+                    print(f"Must hold {pressed_buttons} in 3 frames")
+                    action_queue.append({'action': 'hold', 'buttons': pressed_buttons, 'frame': frame + interval})
             else: 
                 # print(f"Must press {pressed_buttons} in 3 frames")
                 if not holding:
@@ -187,6 +196,7 @@ def main():
     # song = 'Technical Difficulties'
     song = "Monsoon"
     # song = "My Will Be Done"
+    song = "Breakthrough"
     start_game(song)
     print(f"{datetime.now()}: Starting game! Song: {song}")
     sleep(3) # Waiting 3 seconds to start song
@@ -200,7 +210,8 @@ def main():
         pg.press('a')
         
         
-            
+def scroll_down(num):
+    pg.scroll(-num*MOUSE_SCROLL)
 
 def get_rgb_values():
     with Image.open("frame.png") as im:

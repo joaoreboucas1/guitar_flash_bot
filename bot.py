@@ -51,13 +51,17 @@ def choose_song(song):
     Description: chooses a song from the Guitar Flash list
     """
     x_song = 677
-    if song == 'Monsoon':
+    if song == "Monsoon":
         y_song = 627
-    elif song == 'Technical Difficulties':
+    elif song == "Technical Difficulties":
         y_song = 684
-    elif song == 'My Will Be Done':
+    elif song == "My Will Be Done":
         y_song = 742
-    elif song == 'Breakthrough':
+    elif song == "Helicopter":
+        y_song = 710
+        scroll_down(30)
+        sleep(1)
+    elif song == "Breakthrough":
         y_song = 880
         scroll_down(600)
         sleep(1)
@@ -184,6 +188,7 @@ def play_song():
 
 def main():
     print(f"{datetime.now()}: Starting bot!")
+    # song = "Helicopter"
     song = "Monsoon"
     # song = "Technical Difficulties"
     # song = "My Will Be Done"
@@ -221,3 +226,6 @@ def get_rgb_values():
 if __name__=='__main__':
     main()
     # get_rgb_values()
+
+    
+    

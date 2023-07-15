@@ -179,7 +179,7 @@ def play_song():
                 ('l' in held_buttons and color_orange != orange_hold_color)
             )
             if should_release and not (action_queue[-1]['action'] == 'release'):
-                action_queue.append({'action': 'release', 'buttons': None, 'frame': frame + interval})        
+                action_queue.append({'action': 'release', 'buttons': None, 'frame': frame + interval})
     im = ImageGrab.grab()
     im_name = f'./statistics/{datetime.now().strftime("%d-%m-%Y_%H-%M-%S")}.png'
     im.save(im_name, "PNG")

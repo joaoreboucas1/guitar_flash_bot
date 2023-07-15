@@ -60,7 +60,7 @@ def choose_song(song):
     elif song == "Technical Difficulties":
         y_song = 742
     elif song == "Helicopter":
-        y_song = 710
+        y_song = 770
         scroll_down(30)
         sleep(1)
     elif song == "Breakthrough":
@@ -115,7 +115,7 @@ def play_song():
         idle_frames = 0
         previous_pressed = []
 
-        while idle_frames < 400:
+        while idle_frames < 350:
             frame = frame + 1
             im = ImageGrab.grab()
             frame_time = time()
@@ -167,18 +167,15 @@ def play_song():
                 color_yellow = im.getpixel(hold_yellow)
                 color_blue = im.getpixel(hold_blue)
                 color_orange = im.getpixel(hold_orange)
-                print("Checking for release:")
-                print(color_yellow, color_orange)
+                
                 should_release = (
-                    ('a' in held_buttons and color_green != green_hold_color) or
-                    ('s' in held_buttons and color_red != red_hold_color) or
-                    ('j' in held_buttons and color_yellow != yellow_hold_color) or
-                    ('k' in held_buttons and color_blue != blue_hold_color) or 
-                    ('l' in held_buttons and color_orange != orange_hold_color)
+                    ('a' in held_buttons and color_green != green_hold_color and color_green != (255, 255, 255)) or
+                    ('s' in held_buttons and color_red != red_hold_color and color_red != (255, 255, 255)) or
+                    ('j' in held_buttons and color_yellow != yellow_hold_color and color_yellow != (255, 255, 255)) or
+                    ('k' in held_buttons and color_blue != blue_hold_color and color_blue != (255, 255, 255)) or 
+                    ('l' in held_buttons and color_orange != orange_hold_color and color_orange != (255, 255, 255))
                 )
-                print("Release?", should_release)
                 if should_release and not scheduled_release:
-                    print("Schedule release of held buttons")
                     scheduled_release = True
                     action_queue.put({'action': 'release', 'buttons': held_buttons, 'when': frame_time + interval})
         action_queue.put({'action': 'shutdown'})
@@ -236,8 +233,8 @@ def play_song():
 
 def main():
     print(f"{datetime.now()}: Starting bot!")
-    song = "Helicopter"
-    # song = "Monsoon"
+    # song = "Helicopter"
+    song = "Monsoon"
     # song = "Technical Difficulties"
     # song = "My Will Be Done"
     # song = "Breakthrough"

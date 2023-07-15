@@ -194,7 +194,7 @@ def play_song():
             current_time = time()
             if last_action['action'] == 'shutdown':
                 break
-            if abs(last_action['when'] - current_time) < threshold:
+            if last_action['when'] - current_time < threshold:
                 if last_action['action'] == 'press':
                     print(f"{datetime.now()}: Pressing", last_action['buttons'])
                     pg.press(last_action['buttons']) 
@@ -213,7 +213,7 @@ def play_song():
                         pg.keyUp(button)
                     held_buttons = []
                 else:
-                    assert False, f"Unhandled action {last_action['action']}"
+                    continue
             else:
                 action_queue.put(last_action)
     
@@ -236,8 +236,8 @@ def play_song():
 
 def main():
     print(f"{datetime.now()}: Starting bot!")
-    # song = "Helicopter"
-    song = "Monsoon"
+    song = "Helicopter"
+    # song = "Monsoon"
     # song = "Technical Difficulties"
     # song = "My Will Be Done"
     # song = "Breakthrough"

@@ -1,5 +1,7 @@
 from time import sleep
 from datetime import datetime
+import threading
+import queue
 import pyautogui as pg
 import PIL.Image as Image
 import PIL.ImageGrab as ImageGrab
@@ -91,7 +93,6 @@ def play_song():
     idle_frames = 0
     previous_pressed = []
     held_buttons = []
-    action_queue = [{'action': None, 'frame': -1}]
     holding = False
     interval = 3
 
@@ -103,83 +104,118 @@ def play_song():
     bg_orange = im.getpixel(chord_orange)
     print(f"{datetime.now()}: Background colors", bg_green, bg_red, bg_yellow, bg_blue, bg_orange)
     
-    while idle_frames < 700:
-        frame += 1
-
-        # Check if bot needs to perform an action
-        last_action = action_queue[-1]
-        if last_action['frame'] == frame:
-            if last_action['action'] == 'press':
-                print(f"{datetime.now()}: Pressing", last_action['buttons'])
-                pg.press(last_action['buttons']) 
-            elif last_action['action'] == 'hold' and not holding:
-                holding = True
-                held_buttons = last_action['buttons']
-                print(f"{datetime.now()}: Holding", held_buttons)
-                for button in held_buttons:
-                    pg.keyDown(button)
-            elif last_action['action'] == 'release':
-                holding = False
-                print(f"{datetime.now()}: Releasing", held_buttons)
-                for button in held_buttons:
-                    pg.keyUp(button)
-                held_buttons = []
-            else:
-                assert False, f"Unhandled action {last_action['action']}"
-        
+    
+    def watch_actions(action_queue):
+        """
+        Description: continuously gets frames and processes them into actions, inserting into a queue.
+        """
         # Capture the frame to read specific pixels
-        im = ImageGrab.grab()
+        nonlocal frame, held_buttons, holding, interval, bg_green, bg_red, bg_yellow, bg_blue, bg_orange
+        print(f"Starting to watch actions...")
+        idle_frames = 0
+        scheduled_hold = False
+        while idle_frames < 400:
+            frame = frame + 1
+            im = ImageGrab.grab()
 
-        # Processing frame info
-        if not holding:
-            color_green = im.getpixel(chord_green)
-            color_red = im.getpixel(chord_red)
-            color_yellow = im.getpixel(chord_yellow)
-            color_blue = im.getpixel(chord_blue)
-            color_orange = im.getpixel(chord_orange)
-            buttons_to_press = []
-            should_hold = False
-            if color_green != bg_green:
-                buttons_to_press.append('a')
-                should_hold = im.getpixel(hold_green) == green_hold_color
-            if color_red != bg_red:
-                buttons_to_press.append('s')
-                should_hold = should_hold or (im.getpixel(hold_red) == red_hold_color)
-            if color_yellow != bg_yellow:
-                buttons_to_press.append('j')
-                should_hold = should_hold or (im.getpixel(hold_yellow) == yellow_hold_color)
-            if color_blue != bg_blue:
-                buttons_to_press.append('k')
-                should_hold = should_hold or (im.getpixel(hold_blue) == blue_hold_color)
-            if color_orange != bg_orange:
-                buttons_to_press.append('l')
-                should_hold = should_hold or (im.getpixel(hold_orange) == orange_hold_color)
-            
-            if buttons_to_press == [] or len(buttons_to_press) == 5:
-                idle_frames += 1
-                continue
-            if not (action_queue[-1]['action'] == 'hold'):
-                if should_hold:
-                    idle_frames = 0
-                    action_queue.append({'action': 'hold', 'buttons': buttons_to_press, 'frame': frame + interval})
+            # Processing frame info
+            if not holding:
+                color_green = im.getpixel(chord_green)
+                color_red = im.getpixel(chord_red)
+                color_yellow = im.getpixel(chord_yellow)
+                color_blue = im.getpixel(chord_blue)
+                color_orange = im.getpixel(chord_orange)
+                print(color_yellow, color_blue)
+                buttons_to_press = []
+                should_hold = False
+                if color_green != bg_green:
+                    buttons_to_press.append('a')
+                    should_hold = im.getpixel(hold_green) == green_hold_color
+                if color_red != bg_red:
+                    buttons_to_press.append('s')
+                    should_hold = should_hold or (im.getpixel(hold_red) == red_hold_color)
+                if color_yellow != bg_yellow:
+                    buttons_to_press.append('j')
+                    should_hold = should_hold or (im.getpixel(hold_yellow) == yellow_hold_color)
+                if color_blue != bg_blue:
+                    buttons_to_press.append('k')
+                    should_hold = should_hold or (im.getpixel(hold_blue) == blue_hold_color)
+                if color_orange != bg_orange:
+                    buttons_to_press.append('l')
+                    should_hold = should_hold or (im.getpixel(hold_orange) == orange_hold_color)
+                
+                if buttons_to_press == [] or len(buttons_to_press) == 5:
+                    idle_frames += 1
+                    continue
+                if not scheduled_hold:
+                    if should_hold:
+                        idle_frames = 0
+                        print(f"Adding action to queue: hold {buttons_to_press}")
+                        scheduled_hold = True
+                        action_queue.put({'action': 'hold', 'buttons': buttons_to_press, 'frame': frame + interval})
+                    else:
+                        idle_frames = 0
+                        print(f"Adding action to queue: press {buttons_to_press}")
+                        action_queue.put({'action': 'press', 'buttons': buttons_to_press, 'frame': frame + interval})
+            else:
+                color_green = im.getpixel(hold_green)
+                color_red = im.getpixel(hold_red)
+                color_yellow = im.getpixel(hold_yellow)
+                color_blue = im.getpixel(hold_blue)
+                color_orange = im.getpixel(hold_orange)
+                should_release = (
+                    ('a' in held_buttons and color_green != green_hold_color) or
+                    ('s' in held_buttons and color_red != red_hold_color) or
+                    ('j' in held_buttons and color_yellow != yellow_hold_color) or
+                    ('k' in held_buttons and color_blue != blue_hold_color) or 
+                    ('l' in held_buttons and color_orange != orange_hold_color)
+                )
+                if should_release and not (action_queue[-1]['action'] == 'release'):
+                    action_queue.put({'action': 'release', 'buttons': None, 'frame': frame + interval})
+        action_queue.put({'action': 'shutdown'})
+
+
+    def execute_actions(action_queue):
+        """
+        Description: performs actions in the action queue.
+        """
+        nonlocal holding, held_buttons, frame
+        while True:
+            last_action = action_queue.get()
+            if last_action['action'] == 'shutdown':
+                break
+            print(f"Got action! {last_action}, current frame: {frame}")
+            if last_action['frame'] == frame:
+                print(f"Executing action {last_action} at frame {frame}")
+                if last_action['action'] == 'press':
+                    print(f"{datetime.now()}: Pressing", last_action['buttons'])
+                    pg.press(last_action['buttons']) 
+                elif last_action['action'] == 'hold' and not holding:
+                    holding = True
+                    held_buttons = last_action['buttons']
+                    print(f"{datetime.now()}: Holding", held_buttons)
+                    for button in held_buttons:
+                        pg.keyDown(button)
+                elif last_action['action'] == 'release':
+                    holding = False
+                    print(f"{datetime.now()}: Releasing", held_buttons)
+                    for button in held_buttons:
+                        pg.keyUp(button)
+                    held_buttons = []
                 else:
-                    idle_frames = 0
-                    action_queue.append({'action': 'press', 'buttons': buttons_to_press, 'frame': frame + interval})
-        else:
-            color_green = im.getpixel(hold_green)
-            color_red = im.getpixel(hold_red)
-            color_yellow = im.getpixel(hold_yellow)
-            color_blue = im.getpixel(hold_blue)
-            color_orange = im.getpixel(hold_orange)
-            should_release = (
-                ('a' in held_buttons and color_green != green_hold_color) or
-                ('s' in held_buttons and color_red != red_hold_color) or
-                ('j' in held_buttons and color_yellow != yellow_hold_color) or
-                ('k' in held_buttons and color_blue != blue_hold_color) or 
-                ('l' in held_buttons and color_orange != orange_hold_color)
-            )
-            if should_release and not (action_queue[-1]['action'] == 'release'):
-                action_queue.append({'action': 'release', 'buttons': None, 'frame': frame + interval})
+                    assert False, f"Unhandled action {last_action['action']}"
+    
+    action_queue = queue.Queue()
+    action_queue.put({'action': None, 'frame': -1})
+    watch_thread = threading.Thread(target=watch_actions, args=(action_queue,))
+    exec_thread = threading.Thread(target=execute_actions, args=(action_queue,))
+
+    watch_thread.start()
+    exec_thread.start()
+
+    watch_thread.join()
+    exec_thread.join()
+    
     im = ImageGrab.grab()
     im_name = f'./statistics/{datetime.now().strftime("%d-%m-%Y_%H-%M-%S")}.png'
     im.save(im_name, "PNG")

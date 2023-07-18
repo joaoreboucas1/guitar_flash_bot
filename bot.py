@@ -25,6 +25,7 @@ def scale_menu(coords):
     C = 103/82
     D = -133/82
     return (floor((x - B)/A), ceil((y - D)/C))
+
 def scale_play_area(coords):
     if RESIZE_SCREEN:
         return (x,y)
@@ -85,46 +86,22 @@ def click_play():
     pg.click(x_play, y_play)
     print(f"{datetime.now()}: Clicking at ({x_play}, {y_play})")
 
-def choose_song(song):
-    """
-    Description: chooses a song from the Guitar Flash list
-    """
-    x_song = 677
-    if song == "The Lead Sprinkler":
-        y_song = 627
-    elif song == "Monsoon":
-        y_song = 684
-    elif song == "Technical Difficulties":
-        y_song = 742
-    elif song == "Helicopter":
-        y_song = 770
-        scroll_down(30)
-        sleep(1)
-    elif song == "Breakthrough":
-        y_song = 880
-        scroll_down(600)
-        sleep(1)
-        scroll_down(50)
-        sleep(1)
-        scroll_down(-8)
-        sleep(1)
-    else:
-        assert False, "Other songs not implemented"
-    x_song, y_song = scale_menu((x_song, y_song))
-    pg.click(x_song, y_song)
-    print(f"{datetime.now()}: Click at ({x_song}, {y_song})")
-
-def start_game(song):
+def choose_song_from_input():
+    query = input("Choose a song: ")
     click_play()
-    sleep(3) # Takes a while for the song list to load
-    choose_song(song)
-    sleep(10) # Takes a while for the song to load
-    if RESIZE_SCREEN:
-        scroll_down(2)
-    sleep(1)
-    pg.press('a') # Presses any button to start the song
+    sleep(3)
+    print(f"{datetime.now()}: ctrl-f searching for user query...")
+    pg.hotkey('ctrl', 'f')
+    sleep(0.5)
+    pg.write(query)
+    sleep(0.5)
+    print(f"{datetime.now()}: User query result is centralized, clicking screen center")
+    pg.click(715, 551)
+    pg.sleep(10)
     print(f"{datetime.now()}: Pressing 'a'")
-
+    pg.press('a')
+    sleep(3)
+    print(f"{datetime.now()}: Starting game! Song: {query}")
 
 def play_song():
     print(f"{datetime.now()}: Starting song...")
@@ -153,7 +130,7 @@ def play_song():
         idle_frames = 0
         previous_pressed = []
 
-        while idle_frames < 350:
+        while idle_frames < 500:
             frame = frame + 1
             im = ImageGrab.grab()
             frame_time = time()
@@ -165,7 +142,6 @@ def play_song():
                 color_yellow = im.getpixel(chord_yellow)
                 color_blue = im.getpixel(chord_blue)
                 color_orange = im.getpixel(chord_orange)
-                # print(color_yellow, color_blue)
                 buttons_to_press = []
                 should_hold = False
                 if color_green != bg_green and color_green != unheld_button_color:
@@ -229,7 +205,7 @@ def play_song():
             current_time = time()
             if last_action['action'] == 'shutdown':
                 break
-            if last_action['when'] - current_time < threshold:
+            if abs(last_action['when'] - current_time) < threshold:
                 if last_action['action'] == 'press':
                     print(f"{datetime.now()}: Pressing", last_action['buttons'])
                     pg.press(last_action['buttons']) 
@@ -239,19 +215,19 @@ def play_song():
                     held_buttons = last_action['buttons']
                     print(f"{datetime.now()}: Holding", held_buttons)
                     for button in held_buttons:
-                        pg.keyDown(button)
+                        pg.platformModule._keyDown(button)
                 elif last_action['action'] == 'release':
                     holding = False
                     scheduled_release = False
                     print(f"{datetime.now()}: Releasing", held_buttons)
                     for button in held_buttons:
-                        pg.keyUp(button)
+                        pg.platformModule._keyUp(button)
                     held_buttons = []
                 else:
                     continue
             else:
                 action_queue.put(last_action)
-    
+
     action_queue = queue.Queue()
     action_queue.put({'action': None, 'when': -1})
     watch_thread = threading.Thread(target=watch_actions, args=(action_queue,))
@@ -277,40 +253,10 @@ def play_song():
     im.save(im_name, "PNG")
     print(f"{datetime.now()}: Song finished! Saved statistics screenshot in {im_name}.")
 
-
 def main():
     print(f"{datetime.now()}: Starting bot!")
-    # song = "The Lead Sprinkler"
-    song = "Helicopter"
-    # song = "Monsoon"
-    # song = "Technical Difficulties"
-    # song = "My Will Be Done"
-    # song = "Breakthrough"
     choose_song_from_input()
     play_song()
 
-
-def choose_song_from_input():
-    query = input("Choose a song: ")
-    click_play()
-    sleep(3)
-    pg.hotkey('ctrl', 'f')
-    sleep(0.5)
-    pg.write(query)
-    sleep(0.5)
-    pg.click(715, 551)
-    pg.sleep(10)
-    pg.press('a')
-    sleep(3)
-    print(f"{datetime.now()}: Starting game! Song: {query}")
-
-
-def get_rgb_values(im_path):
-    im = Image.open(im_path)
-    print(
-        im.getpixel((886,853)),
-        im.getpixel((1016,853)),
-        im.getpixel((1077,853)),
-    )
 if __name__=='__main__':
     main()

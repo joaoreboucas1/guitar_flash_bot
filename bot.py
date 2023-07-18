@@ -190,12 +190,10 @@ def play_song():
                 if not scheduled_hold:
                     if should_hold:
                         idle_frames = 0
-                        print(f"Adding action to queue: hold {buttons_to_press}")
                         scheduled_hold = True
                         action_queue.put({'action': 'hold', 'buttons': buttons_to_press, 'when': frame_time + interval})
                     else:
                         idle_frames = 0
-                        print(f"Adding action to queue: press {buttons_to_press}")
                         action_queue.put({'action': 'press', 'buttons': buttons_to_press, 'when': frame_time + interval})
                     previous_pressed = buttons_to_press
             else:
@@ -257,9 +255,18 @@ def play_song():
     action_queue.put({'action': None, 'when': -1})
     watch_thread = threading.Thread(target=watch_actions, args=(action_queue,))
     exec_thread = threading.Thread(target=execute_actions, args=(action_queue,))
+    watch_thread.daemon = True
+    exec_thread.daemon = True
 
     watch_thread.start()
     exec_thread.start()
+
+    while watch_thread.is_alive() and exec_thread.is_alive():
+        try:
+            sleep(1)
+        except KeyboardInterrupt:
+            print(f"{datetime.now()}: Interrupting bot...")
+            sys.exit(1)
 
     watch_thread.join()
     exec_thread.join()
@@ -272,6 +279,7 @@ def play_song():
 
 def main():
     print(f"{datetime.now()}: Starting bot!")
+    # song = "The Lead Sprinkler"
     song = "Helicopter"
     # song = "Monsoon"
     # song = "Technical Difficulties"

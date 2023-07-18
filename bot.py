@@ -63,6 +63,7 @@ blue_hold_color = (51, 153, 204)
 red_hold_color = (204, 0, 0)
 yellow_hold_color = (255, 255, 0)
 green_hold_color = (0, 255, 0)
+unheld_button_color = (51, 51, 51)
 
 next_button = scale_play_area((1094, 641))
 next_color = scale_play_area((201,9,9))
@@ -167,19 +168,19 @@ def play_song():
                 # print(color_yellow, color_blue)
                 buttons_to_press = []
                 should_hold = False
-                if color_green != bg_green:
+                if color_green != bg_green and color_green != unheld_button_color:
                     buttons_to_press.append('a')
                     should_hold = im.getpixel(hold_green) == green_hold_color
-                if color_red != bg_red:
+                if color_red != bg_red and color_red != unheld_button_color:
                     buttons_to_press.append('s')
                     should_hold = should_hold or (im.getpixel(hold_red) == red_hold_color)
-                if color_yellow != bg_yellow:
+                if color_yellow != bg_yellow and color_yellow != unheld_button_color:
                     buttons_to_press.append('j')
                     should_hold = should_hold or (im.getpixel(hold_yellow) == yellow_hold_color)
-                if color_blue != bg_blue:
+                if color_blue != bg_blue and bg_blue != unheld_button_color:
                     buttons_to_press.append('k')
                     should_hold = should_hold or (im.getpixel(hold_blue) == blue_hold_color)
-                if color_orange != bg_orange:
+                if color_orange != bg_orange and bg_orange != unheld_button_color:
                     buttons_to_press.append('l')
                     should_hold = should_hold or (im.getpixel(hold_orange) == orange_hold_color)
                 
@@ -285,19 +286,31 @@ def main():
     # song = "Technical Difficulties"
     # song = "My Will Be Done"
     # song = "Breakthrough"
-    start_game(song)
-    print(f"{datetime.now()}: Starting game! Song: {song}")
-    sleep(3) # Waiting 3 seconds to start song
-    for _ in range(10):
-        play_song()
-        print(f"{datetime.now()}: Starting next song...")
-        pg.click(next_button)
-        sleep(12)
-        if RESIZE_SCREEN:
-            scroll_down(2)
-        sleep(1)
-        pg.press('a')
-        print(f"{datetime.now()}: Pressing 'a'")
+    choose_song_from_input()
+    play_song()
 
+
+def choose_song_from_input():
+    query = input("Choose a song: ")
+    click_play()
+    sleep(3)
+    pg.hotkey('ctrl', 'f')
+    sleep(0.5)
+    pg.write(query)
+    sleep(0.5)
+    pg.click(715, 551)
+    pg.sleep(10)
+    pg.press('a')
+    sleep(3)
+    print(f"{datetime.now()}: Starting game! Song: {query}")
+
+
+def get_rgb_values(im_path):
+    im = Image.open(im_path)
+    print(
+        im.getpixel((886,853)),
+        im.getpixel((1016,853)),
+        im.getpixel((1077,853)),
+    )
 if __name__=='__main__':
     main()

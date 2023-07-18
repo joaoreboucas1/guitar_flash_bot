@@ -2,6 +2,8 @@ from time import sleep, time
 from datetime import datetime
 import threading
 import queue
+import sys
+from math import floor, ceil
 import pyautogui as pg
 import PIL.Image as Image
 import PIL.ImageGrab as ImageGrab
@@ -9,19 +11,44 @@ import PIL.ImageGrab as ImageGrab
 # Mouse scroll constant
 MOUSE_SCROLL = 120
 
+RESIZE_SCREEN = False
+if len(sys.argv) > 1 and sys.argv[1] == '--resize':
+    RESIZE_SCREEN = True
+
+def scale_menu(coords):
+    if RESIZE_SCREEN:
+        return (x,y)
+    x = coords[0]
+    y = coords[1]
+    A = 427/341
+    B = -83044/341
+    C = 103/82
+    D = -133/82
+    return (floor((x - B)/A), ceil((y - D)/C))
+def scale_play_area(coords):
+    if RESIZE_SCREEN:
+        return (x,y)
+    x = coords[0]
+    y = coords[1]
+    A = 1027/822
+    B = -99121/411
+    C = 1.25
+    D = -1119/4
+    return (floor((x - B)/A), ceil((y - D)/C))
+
 # Chord check coordinates:
-chord_green = (782, 790)
-chord_red = (864, 790)
-chord_yellow = (947, 790)
-chord_blue = (1027, 790)
-chord_orange = (1106, 790)
+chord_green = scale_play_area((782, 790))
+chord_red = scale_play_area((864, 790))
+chord_yellow = scale_play_area((947, 790))
+chord_blue = scale_play_area((1027, 790))
+chord_orange = scale_play_area((1106, 790))
 
 # Hold check coordinates
-hold_green = (804, 750)
-hold_red = (872, 750)
-hold_yellow = (947, 750)
-hold_blue = (1019, 750)
-hold_orange = (1090, 750)
+hold_green = scale_play_area((804, 750))
+hold_red = scale_play_area((872, 750))
+hold_yellow = scale_play_area((947, 750))
+hold_blue = scale_play_area((1019, 750))
+hold_orange = scale_play_area((1090, 750))
 
 # Color RGB values
 green = (0, 152, 0)
@@ -30,14 +57,22 @@ yellow = (244, 244, 2)
 blue = (0, 152, 255)
 orange = (255, 101, 0)
 white = (255, 255, 255)
+
 orange_hold_color = (255, 102, 0)
 blue_hold_color = (51, 153, 204)
 red_hold_color = (204, 0, 0)
 yellow_hold_color = (255, 255, 0)
 green_hold_color = (0, 255, 0)
 
-next_button = (1094, 641)
-next_color = (201,9,9)
+next_button = scale_play_area((1094, 641))
+next_color = scale_play_area((201,9,9))
+
+def scroll_down(num):
+    pg.scroll(-num*MOUSE_SCROLL)
+    if num < 0:
+        print(f"{datetime.now()}: Scrolling up {-num} times")
+    else:
+        print(f"{datetime.now()}: Scrolling down {num} times")
 
 def click_play():
     """
@@ -45,6 +80,7 @@ def click_play():
     """
     x_play = 675
     y_play = 455
+    x_play, y_play = scale_menu((x_play, y_play))
     pg.click(x_play, y_play)
     print(f"{datetime.now()}: Clicking at ({x_play}, {y_play})")
 
@@ -73,6 +109,7 @@ def choose_song(song):
         sleep(1)
     else:
         assert False, "Other songs not implemented"
+    x_song, y_song = scale_menu((x_song, y_song))
     pg.click(x_song, y_song)
     print(f"{datetime.now()}: Click at ({x_song}, {y_song})")
 
@@ -81,7 +118,8 @@ def start_game(song):
     sleep(3) # Takes a while for the song list to load
     choose_song(song)
     sleep(10) # Takes a while for the song to load
-    scroll_down(2)
+    if RESIZE_SCREEN:
+        scroll_down(2)
     sleep(1)
     pg.press('a') # Presses any button to start the song
     print(f"{datetime.now()}: Pressing 'a'")
@@ -109,9 +147,8 @@ def play_song():
         """
         Description: continuously gets frames and processes them into actions, inserting into a queue.
         """
-        # Capture the frame to read specific pixels
         nonlocal frame, held_buttons, holding, interval, bg_green, bg_red, bg_yellow, bg_blue, bg_orange, scheduled_hold, scheduled_release
-        print(f"Starting to watch actions...")
+        print(f"{datetime.now()}: Thread 1 starting to watch actions...")
         idle_frames = 0
         previous_pressed = []
 
@@ -162,6 +199,7 @@ def play_song():
                         action_queue.put({'action': 'press', 'buttons': buttons_to_press, 'when': frame_time + interval})
                     previous_pressed = buttons_to_press
             else:
+                # TODO: change release check location to match press check location
                 color_green = im.getpixel(hold_green)
                 color_red = im.getpixel(hold_red)
                 color_yellow = im.getpixel(hold_yellow)
@@ -186,6 +224,7 @@ def play_song():
         """
         nonlocal holding, held_buttons, scheduled_hold, scheduled_release
         threshold = 0.08
+        print(f"{datetime.now()}: Thread 2 ready for actions to perform...")
         while True:
             last_action = action_queue.get()
             current_time = time()
@@ -233,44 +272,24 @@ def play_song():
 
 def main():
     print(f"{datetime.now()}: Starting bot!")
-    # song = "Helicopter"
-    song = "Monsoon"
+    song = "Helicopter"
+    # song = "Monsoon"
     # song = "Technical Difficulties"
     # song = "My Will Be Done"
     # song = "Breakthrough"
     start_game(song)
     print(f"{datetime.now()}: Starting game! Song: {song}")
     sleep(3) # Waiting 3 seconds to start song
-    for _ in range(1):
+    for _ in range(10):
         play_song()
         print(f"{datetime.now()}: Starting next song...")
         pg.click(next_button)
         sleep(12)
-        scroll_down(2)
+        if RESIZE_SCREEN:
+            scroll_down(2)
         sleep(1)
         pg.press('a')
         print(f"{datetime.now()}: Pressing 'a'")
 
-        
-        
-def scroll_down(num):
-    pg.scroll(-num*MOUSE_SCROLL)
-    if num < 0:
-        print(f"{datetime.now()}: Scrolling up {-num} times")
-    else:
-        print(f"{datetime.now()}: Scrolling down {num} times")
-
-def get_rgb_values():
-    with Image.open("frame.png") as im:
-        #print(im.getpixel(next_button))
-        print(im.getpixel((782,655)))
-        print(im.getpixel(hold_blue))
-        print(im.getpixel(hold_red))
-        #print(im.getpixel((1078,727)))
-
 if __name__=='__main__':
     main()
-    # get_rgb_values()
-
-    
-    

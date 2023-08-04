@@ -17,6 +17,6 @@ If your screen scale is set to 125%, run the bot with the `--resize` flag.
 - 20457 on Foo Fighters - These Days. Hit 1670 (83%), missed 320, wrong 126, 6/11 specials, max combo 330*
 
 ## Notes
-- This bot has only been tested on my own computer: it might not work properly in other computers.
-- The code implicitly assumes "simultaneous hold/release" actions: keys are always held and released together. Many songs don't operate like this.
-- The bot does not perform well in a variety of situations. For instance, in the song These Days, the bot has trouble processing when there are quick sequences of hold/release/press actions.
+- I still need to fine-tune the time delay, action execution threshold, image check positions...
+- The code implicitly assumes "simultaneous hold/release" actions: keys are always held and released together. Many songs don't operate like this. I'm trying to figure out how to implement this in an efficient way.
+- TODO: bring the release check down to the press check location.

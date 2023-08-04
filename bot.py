@@ -160,7 +160,7 @@ def play_song():
                     buttons_to_press.append('l')
                     should_hold = should_hold or (im.getpixel(hold_orange) == orange_hold_color)
                 
-                if buttons_to_press == [] or len(buttons_to_press) == 5 or buttons_to_press == previous_pressed:
+                if buttons_to_press == [] or len(buttons_to_press) > 3 or buttons_to_press == previous_pressed:
                     idle_frames += 1
                     previous_pressed = []
                     continue
@@ -223,9 +223,14 @@ def play_song():
                     for button in held_buttons:
                         pg.platformModule._keyUp(button)
                     held_buttons = []
-                else:
-                    continue
-            else:
+            elif current_time > last_action['when'] and last_action['action'] == 'release':
+                holding = False
+                scheduled_release = False
+                print(f"{datetime.now()}: Releasing", held_buttons)
+                for button in held_buttons:
+                    pg.platformModule._keyUp(button)
+                held_buttons = []
+            elif current_time < last_action['when']:
                 action_queue.put(last_action)
 
     action_queue = queue.Queue()

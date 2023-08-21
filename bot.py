@@ -1,5 +1,6 @@
 from time import sleep, time
 from datetime import datetime
+import logging
 import threading
 import queue
 import sys
@@ -7,6 +8,8 @@ from math import floor, ceil
 import pyautogui as pg
 import PIL.Image as Image
 import PIL.ImageGrab as ImageGrab
+
+logging.basicConfig(stream=sys.stdout, format='%(asctime)s: %(message)s', datefmt='%d/%m/%Y %I:%M:%S %p', level=logging.INFO)
 
 # Mouse scroll constant
 MOUSE_SCROLL = 120
@@ -72,9 +75,9 @@ next_color = scale_play_area((201,9,9))
 def scroll_down(num):
     pg.scroll(-num*MOUSE_SCROLL)
     if num < 0:
-        print(f"{datetime.now()}: Scrolling up {-num} times")
+        logging.info(f"Scrolling up {-num} times")
     else:
-        print(f"{datetime.now()}: Scrolling down {num} times")
+        logging.info(f"Scrolling down {num} times")
 
 def click_play():
     """
@@ -84,28 +87,28 @@ def click_play():
     y_play = 455
     x_play, y_play = scale_menu((x_play, y_play))
     pg.click(x_play, y_play)
-    print(f"{datetime.now()}: Clicking at ({x_play}, {y_play})")
+    logging.info(f"Clicking at ({x_play}, {y_play})")
 
 def choose_song_from_input():
     query = input("Choose a song: ")
     click_play()
     sleep(3)
-    print(f"{datetime.now()}: ctrl-f searching for user query...")
+    logging.info(f"ctrl-f searching for user query...")
     pg.hotkey('ctrl', 'f')
     sleep(0.5)
     pg.write(query)
     sleep(0.5)
-    print(f"{datetime.now()}: User query result is centralized, clicking screen center")
+    logging.info(f"User query result is centralized, clicking screen center")
     pg.click(715, 551)
     pg.sleep(10)
-    print(f"{datetime.now()}: Pressing 'a'")
+    logging.info(f"Pressing 'a'")
     pg.press('a')
     sleep(3)
-    print(f"{datetime.now()}: Starting game! Song: {query}")
+    logging.info(f"Starting game! Song: {query}")
     return query
 
 def play_song(song):
-    print(f"{datetime.now()}: Starting song...")
+    logging.info(f"Starting song...")
     frame = 0
     start_time = time()
     held_buttons = []
@@ -120,14 +123,14 @@ def play_song(song):
     bg_yellow = im.getpixel(chord_yellow)
     bg_blue = im.getpixel(chord_blue)
     bg_orange = im.getpixel(chord_orange)
-    print(f"{datetime.now()}: Background colors", bg_green, bg_red, bg_yellow, bg_blue, bg_orange)
+    logging.info(f"Background colors", bg_green, bg_red, bg_yellow, bg_blue, bg_orange)
     
     def watch_actions(action_queue):
         """
         Description: continuously gets frames and processes them into actions, inserting into a queue.
         """
         nonlocal frame, held_buttons, holding, interval, bg_green, bg_red, bg_yellow, bg_blue, bg_orange, scheduled_hold, scheduled_release
-        print(f"{datetime.now()}: Thread 1 starting to watch actions...")
+        logging.info(f"Thread 1 starting to watch actions...")
         idle_frames = 0
         previous_pressed = []
 
@@ -200,7 +203,7 @@ def play_song(song):
         """
         nonlocal holding, held_buttons, scheduled_hold, scheduled_release
         threshold = 0.08
-        print(f"{datetime.now()}: Thread 2 ready for actions to perform...")
+        logging.info(f"Thread 2 ready for actions to perform...")
         while True:
             last_action = action_queue.get()
             current_time = time()
@@ -208,26 +211,26 @@ def play_song(song):
                 break
             if abs(last_action['when'] - current_time) < threshold:
                 if last_action['action'] == 'press':
-                    print(f"{datetime.now()}: Pressing", last_action['buttons'])
+                    logging.info(f"Pressing", last_action['buttons'])
                     pg.press(last_action['buttons']) 
                 elif last_action['action'] == 'hold' and not holding:
                     holding = True
                     scheduled_hold = False
                     held_buttons = last_action['buttons']
-                    print(f"{datetime.now()}: Holding", held_buttons)
+                    logging.info(f"Holding", held_buttons)
                     for button in held_buttons:
                         pg.platformModule._keyDown(button)
                 elif last_action['action'] == 'release':
                     holding = False
                     scheduled_release = False
-                    print(f"{datetime.now()}: Releasing", held_buttons)
+                    logging.info(f"Releasing", held_buttons)
                     for button in held_buttons:
                         pg.platformModule._keyUp(button)
                     held_buttons = []
             elif current_time > last_action['when'] and last_action['action'] == 'release':
                 holding = False
                 scheduled_release = False
-                print(f"{datetime.now()}: Releasing", held_buttons)
+                logging.info(f"Releasing", held_buttons)
                 for button in held_buttons:
                     pg.platformModule._keyUp(button)
                 held_buttons = []
@@ -248,7 +251,7 @@ def play_song(song):
         try:
             sleep(1)
         except KeyboardInterrupt:
-            print(f"{datetime.now()}: Interrupting bot...")
+            logging.info("Interrupting bot...")
             sys.exit(1)
 
     watch_thread.join()
@@ -257,10 +260,10 @@ def play_song(song):
     im = ImageGrab.grab()
     im_name = f'./statistics/{song}_{datetime.now().strftime("%d-%m-%Y_%H-%M-%S")}.png'
     im.save(im_name, "PNG")
-    print(f"{datetime.now()}: Song finished! Saved statistics screenshot in {im_name}.")
+    logging.info(f"Song finished! Saved statistics screenshot in {im_name}.")
 
 def main():
-    print(f"{datetime.now()}: Starting bot!")
+    logging.info("Starting bot!")
     song = choose_song_from_input()
     play_song(song)
 

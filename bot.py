@@ -102,8 +102,9 @@ def choose_song_from_input():
     pg.press('a')
     sleep(3)
     print(f"{datetime.now()}: Starting game! Song: {query}")
+    return query
 
-def play_song():
+def play_song(song):
     print(f"{datetime.now()}: Starting song...")
     frame = 0
     start_time = time()
@@ -254,14 +255,14 @@ def play_song():
     exec_thread.join()
     
     im = ImageGrab.grab()
-    im_name = f'./statistics/{datetime.now().strftime("%d-%m-%Y_%H-%M-%S")}.png'
+    im_name = f'./statistics/{song}_{datetime.now().strftime("%d-%m-%Y_%H-%M-%S")}.png'
     im.save(im_name, "PNG")
     print(f"{datetime.now()}: Song finished! Saved statistics screenshot in {im_name}.")
 
 def main():
     print(f"{datetime.now()}: Starting bot!")
-    choose_song_from_input()
-    play_song()
+    song = choose_song_from_input()
+    play_song(song)
 
 if __name__=='__main__':
     main()

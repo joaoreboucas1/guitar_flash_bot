@@ -1,5 +1,6 @@
 from time import sleep, time
 from datetime import datetime
+from enum import Enum
 import logging
 import threading
 import queue
@@ -71,6 +72,11 @@ unheld_button_color = (51, 51, 51)
 
 next_button = scale_play_area((1094, 641))
 next_color = scale_play_area((201,9,9))
+
+class Action(Enum):
+    PRESS = 1
+    HOLD = 2
+    RELEASE = 3
 
 def scroll_down(num):
     pg.scroll(-num*MOUSE_SCROLL)
@@ -172,10 +178,10 @@ def play_song(song):
                     if should_hold:
                         idle_frames = 0
                         scheduled_hold = True
-                        action_queue.put({'action': 'hold', 'buttons': buttons_to_press, 'when': frame_time + interval})
+                        action_queue.put({'action': Action.HOLD, 'buttons': buttons_to_press, 'when': frame_time + interval})
                     else:
                         idle_frames = 0
-                        action_queue.put({'action': 'press', 'buttons': buttons_to_press, 'when': frame_time + interval})
+                        action_queue.put({'action': Action.PRESS, 'buttons': buttons_to_press, 'when': frame_time + interval})
                     previous_pressed = buttons_to_press
             else:
                 # TODO: change release check location to match press check location
@@ -194,7 +200,7 @@ def play_song(song):
                 )
                 if should_release and not scheduled_release:
                     scheduled_release = True
-                    action_queue.put({'action': 'release', 'buttons': held_buttons, 'when': frame_time + interval})
+                    action_queue.put({'action': Action.RELEASE, 'buttons': held_buttons, 'when': frame_time + interval})
         action_queue.put({'action': 'shutdown'})
 
     def execute_actions(action_queue):
@@ -210,27 +216,27 @@ def play_song(song):
             if last_action['action'] == 'shutdown':
                 break
             if abs(last_action['when'] - current_time) < threshold:
-                if last_action['action'] == 'press':
-                    logging.info(f"Pressing", last_action['buttons'])
+                if last_action['action'] == Action.PRESS:
+                    logging.info(f"Pressing {last_action['buttons']}")
                     pg.press(last_action['buttons']) 
-                elif last_action['action'] == 'hold' and not holding:
+                elif last_action['action'] == Action.HOLD and not holding:
                     holding = True
                     scheduled_hold = False
                     held_buttons = last_action['buttons']
-                    logging.info(f"Holding", held_buttons)
+                    logging.info(f"Holding {held_buttons}")
                     for button in held_buttons:
                         pg.platformModule._keyDown(button)
-                elif last_action['action'] == 'release':
+                elif last_action['action'] == Action.RELEASE:
                     holding = False
                     scheduled_release = False
-                    logging.info(f"Releasing", held_buttons)
+                    logging.info(f"Releasing {held_buttons}")
                     for button in held_buttons:
                         pg.platformModule._keyUp(button)
                     held_buttons = []
-            elif current_time > last_action['when'] and last_action['action'] == 'release':
+            elif current_time > last_action['when'] and last_action['action'] == Action.RELEASE:
                 holding = False
                 scheduled_release = False
-                logging.info(f"Releasing", held_buttons)
+                logging.info(f"Releasing {held_buttons}")
                 for button in held_buttons:
                     pg.platformModule._keyUp(button)
                 held_buttons = []

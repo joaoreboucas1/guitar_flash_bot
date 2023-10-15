@@ -107,7 +107,7 @@ def choose_song_from_input():
     sleep(0.5)
     logging.info(f"User query result is centralized, clicking screen center")
     pg.click(715, 551)
-    pg.sleep(10)
+    sleep(10)
     logging.info(f"Pressing 'a'")
     pg.press('a')
     sleep(3)

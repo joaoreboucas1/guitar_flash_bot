@@ -10,7 +10,8 @@ import pyautogui as pg
 import PIL.Image as Image
 import PIL.ImageGrab as ImageGrab
 
-logging.basicConfig(stream=sys.stdout, format='%(asctime)s: %(message)s', datefmt='%d/%m/%Y %I:%M:%S %p', level=logging.INFO)
+logging.basicConfig(stream=sys.stdout, format='%(asctime)s.%(msecs)03d: %(message)s',
+                    datefmt='%d/%m/%Y %H:%M:%S', level=logging.INFO)
 
 # Mouse scroll constant
 MOUSE_SCROLL = 120
@@ -129,7 +130,7 @@ def play_song(song):
     bg_yellow = im.getpixel(chord_yellow)
     bg_blue = im.getpixel(chord_blue)
     bg_orange = im.getpixel(chord_orange)
-    logging.info(f"Background colors", bg_green, bg_red, bg_yellow, bg_blue, bg_orange)
+    logging.info(f"Background colors: {bg_green}, {bg_red}, {bg_yellow}, {bg_blue}, {bg_orange}")
     
     def watch_actions(action_queue):
         """

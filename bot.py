@@ -186,11 +186,11 @@ def play_song(song):
                     previous_pressed = buttons_to_press
             else:
                 # TODO: change release check location to match press check location
-                color_green = im.getpixel(hold_green)
-                color_red = im.getpixel(hold_red)
-                color_yellow = im.getpixel(hold_yellow)
-                color_blue = im.getpixel(hold_blue)
-                color_orange = im.getpixel(hold_orange)
+                color_green = im.getpixel(chord_green)
+                color_red = im.getpixel(chord_red)
+                color_yellow = im.getpixel(chord_yellow)
+                color_blue = im.getpixel(chord_blue)
+                color_orange = im.getpixel(chord_orange)
                 
                 should_release = (
                     ('a' in held_buttons and color_green != green_hold_color and color_green != (255, 255, 255)) or

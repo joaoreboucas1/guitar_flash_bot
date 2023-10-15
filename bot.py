@@ -145,14 +145,15 @@ def play_song(song):
             frame = frame + 1
             im = ImageGrab.grab()
             frame_time = time()
+            
+            color_green = im.getpixel(chord_green)
+            color_red = im.getpixel(chord_red)
+            color_yellow = im.getpixel(chord_yellow)
+            color_blue = im.getpixel(chord_blue)
+            color_orange = im.getpixel(chord_orange)
 
             # Processing frame info
             if not holding:
-                color_green = im.getpixel(chord_green)
-                color_red = im.getpixel(chord_red)
-                color_yellow = im.getpixel(chord_yellow)
-                color_blue = im.getpixel(chord_blue)
-                color_orange = im.getpixel(chord_orange)
                 buttons_to_press = []
                 should_hold = False
                 if color_green != bg_green and color_green != unheld_button_color:
@@ -184,14 +185,7 @@ def play_song(song):
                         idle_frames = 0
                         action_queue.put({'action': Action.PRESS, 'buttons': buttons_to_press, 'when': frame_time + interval})
                     previous_pressed = buttons_to_press
-            else:
-                # TODO: change release check location to match press check location
-                color_green = im.getpixel(chord_green)
-                color_red = im.getpixel(chord_red)
-                color_yellow = im.getpixel(chord_yellow)
-                color_blue = im.getpixel(chord_blue)
-                color_orange = im.getpixel(chord_orange)
-                
+            else:                
                 should_release = (
                     ('a' in held_buttons and color_green != green_hold_color and color_green != (255, 255, 255)) or
                     ('s' in held_buttons and color_red != red_hold_color and color_red != (255, 255, 255)) or
@@ -265,7 +259,7 @@ def play_song(song):
     exec_thread.join()
     
     im = ImageGrab.grab()
-    im_name = f'./statistics/{song}_{datetime.now().strftime("%d-%m-%Y_%H-%M-%S")}.png'
+    im_name = f'./statistics/{song.replace(" ", "_")}_{datetime.now().strftime("%d-%m-%Y_%H-%M-%S")}.png'
     im.save(im_name, "PNG")
     logging.info(f"Song finished! Saved statistics screenshot in {im_name}.")
 

@@ -17,6 +17,7 @@ If your screen scale is set to 125%, run the bot with the `--resize` flag.
 - 20457 on Foo Fighters - These Days. Hit 1670 (83%), missed 320, wrong 126, 6/11 specials, max combo 330*
 
 ## Notes
+- I have a new philosophy for the bot. Let the user pick the song and select the play area on the screen, and the bot will take control afterwards
 - I still need to fine-tune the time delay, action execution threshold, image check positions...
 - Could I use `multiprocessing` instead of `threading`? The APIs are identical...
 - The code implicitly assumes "simultaneous hold/release" actions: different keys are always held and released together. Many songs don't operate like this (i.e. Knights of Cydonia after intro). I'm trying to figure out how to implement this in an efficient way.

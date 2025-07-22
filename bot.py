@@ -9,52 +9,10 @@ from math import floor, ceil
 import pyautogui as pg
 import PIL.Image as Image
 import PIL.ImageGrab as ImageGrab
+import pynput
 
 logging.basicConfig(stream=sys.stdout, format='%(asctime)s.%(msecs)03d: %(message)s',
                     datefmt='%d/%m/%Y %H:%M:%S', level=logging.INFO)
-
-# Mouse scroll constant
-MOUSE_SCROLL = 120
-
-RESIZE_SCREEN = False
-if len(sys.argv) > 1 and sys.argv[1] == '--resize':
-    RESIZE_SCREEN = True
-
-def scale_menu(coords):
-    if RESIZE_SCREEN:
-        return (x,y)
-    x = coords[0]
-    y = coords[1]
-    A = 427/341
-    B = -83044/341
-    C = 103/82
-    D = -133/82
-    return (floor((x - B)/A), ceil((y - D)/C))
-
-def scale_play_area(coords):
-    if RESIZE_SCREEN:
-        return (x,y)
-    x = coords[0]
-    y = coords[1]
-    A = 1027/822
-    B = -99121/411
-    C = 1.25
-    D = -1119/4
-    return (floor((x - B)/A), ceil((y - D)/C))
-
-# Chord check coordinates:
-chord_green = scale_play_area((782, 790))
-chord_red = scale_play_area((864, 790))
-chord_yellow = scale_play_area((947, 790))
-chord_blue = scale_play_area((1027, 790))
-chord_orange = scale_play_area((1106, 790))
-
-# Hold check coordinates
-hold_green = scale_play_area((804, 750))
-hold_red = scale_play_area((872, 750))
-hold_yellow = scale_play_area((947, 750))
-hold_blue = scale_play_area((1019, 750))
-hold_orange = scale_play_area((1090, 750))
 
 # Color RGB values
 green = (0, 152, 0)
@@ -71,20 +29,13 @@ yellow_hold_color = (255, 255, 0)
 green_hold_color = (0, 255, 0)
 unheld_button_color = (51, 51, 51)
 
-next_button = scale_play_area((1094, 641))
-next_color = scale_play_area((201,9,9))
+next_button = (1094, 641)
+next_color = (201,9,9)
 
 class Action(Enum):
     PRESS = 1
     HOLD = 2
     RELEASE = 3
-
-def scroll_down(num):
-    pg.scroll(-num*MOUSE_SCROLL)
-    if num < 0:
-        logging.info(f"Scrolling up {-num} times")
-    else:
-        logging.info(f"Scrolling down {num} times")
 
 def click_play():
     """
@@ -96,28 +47,33 @@ def click_play():
     pg.click(x_play, y_play)
     logging.info(f"Clicking at ({x_play}, {y_play})")
 
-def choose_song_from_input():
-    query = input("Choose a song: ")
-    click_play()
-    sleep(3)
-    logging.info(f"ctrl-f searching for user query...")
-    pg.hotkey('ctrl', 'f')
-    sleep(0.5)
-    pg.write(query)
-    sleep(0.5)
-    logging.info(f"User query result is centralized, clicking screen center")
-    pg.click(715, 551)
-    sleep(10)
-    logging.info(f"Pressing 'a'")
-    pg.press('a')
-    sleep(3)
-    logging.info(f"Starting game! Song: {query}")
-    return query
+def play_song(play_area):
+    (left, top), (right, bottom) = play_area
+    width = right - left
+    height = bottom - top
 
-def play_song(song):
+    # Chord check coordinates
+    chord_green  = (left + 248, bottom - 100)
+    chord_red    = (left + 326, bottom - 100)
+    chord_yellow = (left + 408, bottom - 100)
+    chord_blue   = (left + 485, bottom - 100)
+    chord_orange = (left + 565, bottom - 100)
+
+    # Hold check coordinates
+    hold_green  = (left + 268, bottom - 143)
+    hold_red    = (left + 335, bottom - 143)
+    hold_yellow = (left + 406, bottom - 143)
+    hold_blue   = (left + 480, bottom - 143)
+    hold_orange = (left + 545, bottom - 143)
+    
     logging.info(f"Starting song...")
+    pg.click(left + width/2, top + height/2)
+    sleep(0.1)
+    pg.press("a")
+
     frame = 0
     start_time = time()
+    
     held_buttons = []
     holding = False
     interval = 0.2
@@ -263,10 +219,22 @@ def play_song(song):
     im.save(im_name, "PNG")
     logging.info(f"Song finished! Saved statistics screenshot in {im_name}.")
 
+
+play_area = []
+def on_click(x, y, button, pressed):
+    if pressed:
+        logging.info(f"Registered play area corner at ({x}, {y})")
+        play_area.append([x, y])
+        if len(play_area) >= 2: return False
+
 def main():
     logging.info("Starting bot!")
-    song = choose_song_from_input()
-    play_song(song)
+    logging.info("Choose the song and wait for it to load")
+    logging.info("Click on the top left and bottom right corners of the play area")
+    with pynput.mouse.Listener(on_click=on_click) as listener:
+        listener.join()
+    logging.info(f"Play area corners: {play_area}")
+    play_song(play_area)
 
 if __name__=='__main__':
     main()
